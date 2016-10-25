@@ -50,10 +50,24 @@ namespace asl
 
         bool gotFirstPosePacket = false;
         double initialX = 0, initialY = 0, initialZ = 0;
-
+        
+        // for plotting marks
         private Single disToLeftLaneMark;
         private Single disToRightLaneMark;
         private Single lane_width;
+
+        // for estimation
+        private Single[] left_history = new Single[10];
+        private Single[] right_history = new Single[10];
+
+        private Single left_mark_total = 0;
+        private Single right_mark_total = 0;
+
+        private int left_mark_count = 0;
+        private int right_mark_count = 0;
+
+        private Single est_left = 0;
+        private Single est_right = 0;
 
         private void PoseClient_PoseAbsReceived(object sender, PoseAbsReceivedEventArgs e)
         {
@@ -77,8 +91,29 @@ namespace asl
 
             PoseYPR toPlot = new PoseYPR(X, Y, Z, (Angle)e.PoseAbsData.yaw, (Angle)e.PoseAbsData.pitch, (Angle)e.PoseAbsData.roll);
             poseRenderable.AddPose(toPlot);
-            if (disToLeftLaneMark == disToRightLaneMark && disToLeftLaneMark == 0 && disToRightLaneMark == 0) return;
+            if (disToLeftLaneMark == 0 && disToRightLaneMark == 0) return;
+            //if (disToLeftLaneMark >= 0 )
+            //{
+            //    disToLeftLaneMark = est_left;
+            //}
 
+            //if (disToRightLaneMark <= 0)
+            //{
+            //    disToRightLaneMark = est_right;
+            //}
+
+            //    // calculating the averages
+            //    if (disToLeftLaneMark < 0)
+            //{
+            //    left_mark_count++;
+            //    est_left = disToLeftLaneMark;
+            //}
+
+            //if (disToRightLaneMark > 0)
+            //{
+            //    right_mark_count++;
+            //    est_right = disToRightLaneMark;
+            //}
 
             // plotting the left lane mark
             double vx = e.PoseAbsData.ecef_vx;
@@ -93,7 +128,7 @@ namespace asl
             leftMarkVec = new DEASL.Core.Mathematics.Vector3(0, 0, 0);
             rightMarkVec = new DEASL.Core.Mathematics.Vector3(0, 0, 0);
 
-            lane_width = Math.Abs(disToLeftLaneMark - disToRightLaneMark);
+            lane_width = Math.Abs(disToLeftLaneMark) + Math.Abs(disToRightLaneMark);
             cons_left = Math.Abs(lane_width)/2;
     
             leftMarkVec.X = new_y.X * cons_left + X;
@@ -112,6 +147,8 @@ namespace asl
             rightpPathRenderable.AddPose(rightPath);
             // the end of plotting
         }
+
+        
 
         private List<Single> calculate_average()
         {
@@ -149,6 +186,15 @@ namespace asl
         // =========================================================================================
         // =========================================================================================
         // print for debug use
+        public Single get_average(Single[] arr, Single mark_total, int mark_count, Single dis_to_mark) 
+        {
+            if (mark_count > arr.Length) mark_count = 1;
+            Single prev =(Single)arr[mark_count - 1];
+            arr[mark_count - 1] = dis_to_mark;
+            mark_total = mark_total - prev + dis_to_mark;
+            return mark_total/mark_count;
+        }
+
         public void print(RichTextBox r, PoseAbsReceivedEventArgs e)
         {
             //MethodInvoker action = delegate
