@@ -36,10 +36,10 @@ namespace asl
 
             // initializing the leftPathRenderable
             leftPathRenderable = new PoseRenderable();
-            leftPathRenderable.PointColor = Color.Blue;
+            leftPathRenderable.PointColor = Color.Black;
             // initializing the rightPathRenderable
             rightpPathRenderable = new PoseRenderable();
-            rightpPathRenderable.PointColor = Color.Black;
+            rightpPathRenderable.PointColor = Color.Blue;
             // initialzing the ECEF poseRenderable of the vehicle
             poseRenderable = new PoseRenderable();
             poseRenderable.PointColor = Color.Red;
@@ -53,10 +53,10 @@ namespace asl
 
         private Single disToLeftLaneMark;
         private Single disToRightLaneMark;
+        private Single lane_width;
 
         private void PoseClient_PoseAbsReceived(object sender, PoseAbsReceivedEventArgs e)
         {
-            if (disToLeftLaneMark == disToRightLaneMark && disToLeftLaneMark == 0 && disToRightLaneMark == 0) return;
             PoseYPR leftPath, rightPath;
             double cons_left, cons_right;
             DEASL.Core.Mathematics.Vector3 new_x, new_y, new_z;
@@ -77,6 +77,8 @@ namespace asl
 
             PoseYPR toPlot = new PoseYPR(X, Y, Z, (Angle)e.PoseAbsData.yaw, (Angle)e.PoseAbsData.pitch, (Angle)e.PoseAbsData.roll);
             poseRenderable.AddPose(toPlot);
+            if (disToLeftLaneMark == disToRightLaneMark && disToLeftLaneMark == 0 && disToRightLaneMark == 0) return;
+
 
             // plotting the left lane mark
             double vx = e.PoseAbsData.ecef_vx;
@@ -91,7 +93,8 @@ namespace asl
             leftMarkVec = new DEASL.Core.Mathematics.Vector3(0, 0, 0);
             rightMarkVec = new DEASL.Core.Mathematics.Vector3(0, 0, 0);
 
-            cons_left = Math.Sqrt(Math.Abs(disToLeftLaneMark));
+            lane_width = Math.Abs(disToLeftLaneMark - disToRightLaneMark);
+            cons_left = Math.Abs(lane_width)/2;
     
             leftMarkVec.X = new_y.X * cons_left + X;
             leftMarkVec.Y = new_y.Y * cons_left + Y;
@@ -100,7 +103,7 @@ namespace asl
             leftPath = new PoseYPR(leftMarkVec.X, leftMarkVec.Y, leftMarkVec.Z, (Angle)0, (Angle)0, (Angle)0);
             leftPathRenderable.AddPose(leftPath);
             // plotting the right lane mark
-            cons_right = -Math.Sqrt(Math.Abs(disToRightLaneMark));
+            cons_right = -Math.Abs(lane_width)/2;
             rightMarkVec.X = new_y.X * cons_right + X;
             rightMarkVec.Y = new_y.Y * cons_right + Y;
             rightMarkVec.Z = new_y.Z * cons_right + Z;
@@ -108,6 +111,13 @@ namespace asl
             rightPath = new PoseYPR(rightMarkVec.X, rightMarkVec.Y, rightMarkVec.Z, (Angle)0, (Angle)0, (Angle)0);
             rightpPathRenderable.AddPose(rightPath);
             // the end of plotting
+        }
+
+        private List<Single> calculate_average()
+        {
+            List<Single> rtn = new List<Single>();
+
+            return rtn;
         }
 
         private void MobileyeInterface_GotMobileyeRoadInformation(object sender, MobileyeRoadInformationEventArgs e)
@@ -125,7 +135,7 @@ namespace asl
         private void Form1_Load(object sender, EventArgs e)
         {
             renderer = new Renderer(this.drawingPad, 50);
-
+            renderer.GridStep = (float)0.5;
             renderer.AddRenderable(leftPathRenderable);
             renderer.AddRenderable(rightpPathRenderable);
             renderer.AddRenderable(poseRenderable);
