@@ -91,7 +91,7 @@ namespace asl
 
             PoseYPR toPlot = new PoseYPR(X, Y, Z, (Angle)e.PoseAbsData.yaw, (Angle)e.PoseAbsData.pitch, (Angle)e.PoseAbsData.roll);
             poseRenderable.AddPose(toPlot);
-            if (disToLeftLaneMark == 0 && disToRightLaneMark == 0) return;
+            if (disToRightLaneMark == disToLeftLaneMark || (disToLeftLaneMark == 0 && disToRightLaneMark == 0)) return;
             //if (disToLeftLaneMark >= 0 )
             //{
             //    disToLeftLaneMark = est_left;
@@ -128,7 +128,12 @@ namespace asl
             leftMarkVec = new DEASL.Core.Mathematics.Vector3(0, 0, 0);
             rightMarkVec = new DEASL.Core.Mathematics.Vector3(0, 0, 0);
 
-            lane_width = Math.Abs(disToLeftLaneMark) + Math.Abs(disToRightLaneMark);
+            if (disToRightLaneMark * disToRightLaneMark <= 0)
+            {
+                lane_width = Math.Abs(disToLeftLaneMark) + Math.Abs(disToRightLaneMark);
+            }
+            else lane_width = Math.Abs(Math.Abs(disToLeftLaneMark) - Math.Abs(disToRightLaneMark));
+
             cons_left = Math.Abs(lane_width)/2;
     
             leftMarkVec.X = new_y.X * cons_left + X;
